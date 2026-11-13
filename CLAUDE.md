@@ -32,8 +32,8 @@ npx newman run postman/study-buddy.postman_collection.json
 ```
 
 ## Status / what's left
-- [ ] Push to GitHub, replace YOUR-USERNAME in the README badge, get CI green
-- [ ] Branch protection on `main` requiring the "All tests passed" check
+- [x] Push to GitHub, replace YOUR-USERNAME in the README badge, get CI green
+- [x] Branch protection on `main` requiring the "All tests passed" check
 - [ ] Vig writes `tests/api/test_practice.py` and `tests/ui/test_practice_ui.py` himself.
       **Coach him, don't write these for him.**
 - [ ] Optional: deploy to Render

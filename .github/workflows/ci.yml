@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # 1) Fast API + SQL tests. If these fail, don't bother spinning up browsers.
+  api-tests:
+    name: pytest (API + SQL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: pytest tests/api -v
+
+  # 2) Postman collection via Newman, against a real running server.
+  postman:
+    name: Postman (Newman)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -r requirements.txt
+      - name: Start the app in the background
+        run: |
+          flask --app app run --port 5000 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:5000/api/health && exit 0
+            sleep 1
+          done
+          echo "Server did not start" && exit 1
+      - run: npx --yes newman run postman/study-buddy.postman_collection.json
+
+  # 3) Playwright UI tests on three browser engines, in parallel.
+  ui-tests:
+    name: Playwright (${{ matrix.browser }})
+    needs: api-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false          # one browser failing shouldn't hide results from the others
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m playwright install --with-deps ${{ matrix.browser }}
+      - run: pytest tests/ui --browser ${{ matrix.browser }} -v
+
+  # 4) One check to rule them all: branch protection requires only this job.
+  all-tests-passed:
+    name: All tests passed
+    if: always()
+    needs: [api-tests, postman, ui-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any job failed or was skipped
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: exit 1
+      - run: echo "Every job is green"

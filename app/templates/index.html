@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your decks</h1>
+
+<form id="new-deck-form" class="panel">
+  <input id="new-deck-name" data-testid="new-deck-name" placeholder="Deck name, e.g. About me" autocomplete="off">
+  <input id="new-deck-description" data-testid="new-deck-description" placeholder="Description (optional)" autocomplete="off">
+  <button type="submit" data-testid="create-deck">Create deck</button>
+  <p id="deck-error" class="error" data-testid="deck-error" hidden></p>
+</form>
+
+<p id="no-decks" class="muted" data-testid="no-decks" hidden>No decks yet. Create your first one above.</p>
+<ul id="deck-list" class="list" data-testid="deck-list"></ul>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const list = document.getElementById("deck-list");
+
+async function loadDecks() {
+  const decks = await api("GET", "/decks");
+  document.getElementById("no-decks").hidden = decks.length > 0;
+  list.replaceChildren(...decks.map(deckRow));
+}
+
+function deckRow(deck) {
+  const nameLink = el("a", { href: `/decks/${deck.id}`, "data-testid": "deck-name", text: deck.name });
+  const count = el("span", { class: "muted", "data-testid": "deck-count",
+                             text: `${deck.card_count} card${deck.card_count === 1 ? "" : "s"}` });
+  const view = el("div", { class: "row-main" }, nameLink, count);
+
+  const editInput = el("input", { "data-testid": "edit-deck-name", value: deck.name });
+  const editBox = el("div", { class: "row-main", hidden: "" }, editInput,
+    el("button", { "data-testid": "save-deck", text: "Save", onclick: async () => {
+      try { await api("PUT", `/decks/${deck.id}`, { name: editInput.value }); await loadDecks(); }
+      catch (e) { showError("deck-error", e.message); }
+    }}));
+
+  const actions = el("div", { class: "actions" },
+    el("button", { class: "secondary", "data-testid": "edit-deck", text: "Edit",
+                   onclick: () => { view.hidden = true; editBox.hidden = false; editInput.focus(); } }),
+    el("button", { class: "danger", "data-testid": "delete-deck", text: "Delete", onclick: async () => {
+      if (!confirm(`Delete "${deck.name}" and all its cards?`)) return;
+      await api("DELETE", `/decks/${deck.id}`); await loadDecks();
+    }}));
+
+  return el("li", { "data-testid": "deck-item" }, view, editBox, actions);
+}
+
+document.getElementById("new-deck-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const name = document.getElementById("new-deck-name");
+  const description = document.getElementById("new-deck-description");
+  try {
+    await api("POST", "/decks", { name: name.value, description: description.value });
+    name.value = ""; description.value = ""; showError("deck-error", "");
+    await loadDecks();
+  } catch (e) { showError("deck-error", e.message); }
+});
+
+loadDecks();
+</script>
+{% endblock %}

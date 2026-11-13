@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Study {{ deck.name }} - Study Buddy{% endblock %}
+{% block content %}
+<p><a href="/decks/{{ deck.id }}">&larr; Back to {{ deck.name }}</a></p>
+<h1>Study: {{ deck.name }}</h1>
+
+<p id="empty" class="muted" data-testid="study-empty" hidden>This deck has no cards yet.</p>
+
+<section id="study" hidden>
+  <div class="study-bar">
+    <span data-testid="progress" id="progress"></span>
+    <span class="muted">Got it: <b data-testid="got-count" id="got-count">0</b> · Missed: <b data-testid="missed-count" id="missed-count">0</b></span>
+  </div>
+
+  <button id="card" class="flashcard" data-testid="flashcard" data-side="front" aria-live="polite">
+    <span class="side-label" data-testid="side-label" id="side-label">Front</span>
+    <span class="card-text" data-testid="card-text" id="card-text"></span>
+    <span class="muted hint">Click to flip</span>
+  </button>
+
+  <div class="study-actions">
+    <button class="secondary" data-testid="shuffle" id="shuffle">Shuffle</button>
+    <button class="secondary" data-testid="flip" id="flip">Flip</button>
+    <button class="danger" data-testid="missed" id="missed">Missed</button>
+    <button class="success" data-testid="got-it" id="got-it">Got it</button>
+    <button data-testid="next" id="next">Next &rarr;</button>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const DECK_ID = {{ deck.id }};
+let cards = [], index = 0, showingBack = false;
+const counts = { got_it: 0, missed: 0 };
+const $ = (id) => document.getElementById(id);
+
+function render() {
+  const card = cards[index];
+  $("card-text").textContent = showingBack ? card.back : card.front;
+  $("side-label").textContent = showingBack ? "Back" : "Front";
+  $("card").dataset.side = showingBack ? "back" : "front";
+  $("card").dataset.cardId = card.id;
+  $("progress").textContent = `Card ${index + 1} of ${cards.length}`;
+  $("got-count").textContent = counts.got_it;
+  $("missed-count").textContent = counts.missed;
+}
+
+function flip() { showingBack = !showingBack; render(); }
+function next() { index = (index + 1) % cards.length; showingBack = false; render(); }
+
+function shuffle() {
+  for (let i = cards.length - 1; i > 0; i--) {          // Fisher-Yates shuffle
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  index = 0; showingBack = false; render();
+}
+
+async function mark(status) {
+  await api("PATCH", `/cards/${cards[index].id}/status`, { status });
+  counts[status] += 1;
+  next();
+}
+
+$("card").addEventListener("click", flip);
+$("flip").addEventListener("click", flip);
+$("next").addEventListener("click", next);
+$("shuffle").addEventListener("click", shuffle);
+$("got-it").addEventListener("click", () => mark("got_it"));
+$("missed").addEventListener("click", () => mark("missed"));
+
+(async () => {
+  cards = await api("GET", `/decks/${DECK_ID}/cards`);
+  if (cards.length === 0) { $("empty").hidden = false; return; }
+  $("study").hidden = false;
+  render();
+})();
+</script>
+{% endblock %}

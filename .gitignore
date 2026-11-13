@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Flask instance folder (local SQLite database)
+instance/
+
+# Node / Newman
+node_modules/
+newman/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

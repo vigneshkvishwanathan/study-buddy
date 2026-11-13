@@ -1,0 +1,1207 @@
+{
+  "info": {
+    "_postman_id": "259bb2f5-56f4-5d86-9cd7-f9b4ab671e7c",
+    "name": "Study Buddy API",
+    "description": "Covers every Study Buddy endpoint: happy paths, validation errors (400), missing resources (404), wrong method (405), and cascade delete. Run the folders in order; requests pass ids to each other through collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Responds in under 1 second\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0 - Health",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Server says ok\", function () {",
+                  "    pm.expect(pm.response.json().status).to.equal(\"ok\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1 - Decks",
+      "item": [
+        {
+          "name": "Create deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const deck = pm.response.json();",
+                  "pm.test(\"Deck has id, name and zero cards\", function () {",
+                  "    pm.expect(deck).to.have.property(\"id\");",
+                  "    pm.expect(deck.name).to.equal(\"Postman Deck\");",
+                  "    pm.expect(deck.card_count).to.equal(0);",
+                  "});",
+                  "pm.collectionVariables.set(\"deckId\", deck.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Deck\",\n  \"description\": \"made by Newman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create deck - missing name -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"no name\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create deck - blank name -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create deck - body not JSON -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "hello"
+            }
+          }
+        },
+        {
+          "name": "List decks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns a list that includes our deck\", function () {",
+                  "    const decks = pm.response.json();",
+                  "    pm.expect(decks).to.be.an(\"array\");",
+                  "    const ids = decks.map(d => d.id);",
+                  "    pm.expect(ids).to.include(pm.collectionVariables.get(\"deckId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns the right deck\", function () {",
+                  "    pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get(\"deckId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Name was updated, description kept\", function () {",
+                  "    const deck = pm.response.json();",
+                  "    pm.expect(deck.name).to.equal(\"Postman Deck (edited)\");",
+                  "    pm.expect(deck.description).to.equal(\"made by Newman\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Deck (edited)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update deck - blank name -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get deck - not found -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "999999"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Cards",
+      "item": [
+        {
+          "name": "Create card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const card = pm.response.json();",
+                  "pm.test(\"New card starts as status new, in our deck\", function () {",
+                  "    pm.expect(card.status).to.equal(\"new\");",
+                  "    pm.expect(card.deck_id).to.equal(pm.collectionVariables.get(\"deckId\"));",
+                  "    pm.expect(card.card_type).to.equal(\"question_answer\");",
+                  "});",
+                  "pm.collectionVariables.set(\"cardId\", card.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}",
+                "cards"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"front\": \"Tell me about yourself\",\n  \"back\": \"QA engineer moving into DevOps...\",\n  \"card_type\": \"question_answer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create card - missing back -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}",
+                "cards"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"front\": \"only a front\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create card - bad card_type -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}",
+                "cards"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"front\": \"a\",\n  \"back\": \"b\",\n  \"card_type\": \"essay\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create card - deck not found -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/999999/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "999999",
+                "cards"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"front\": \"a\",\n  \"back\": \"b\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List cards in deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Deck has exactly one card\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.lengthOf(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}",
+                "cards"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns the right card\", function () {",
+                  "    pm.expect(pm.response.json().id).to.equal(pm.collectionVariables.get(\"cardId\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Back changed, front kept\", function () {",
+                  "    const card = pm.response.json();",
+                  "    pm.expect(card.back).to.equal(\"QA engineer with 3 years of test automation...\");",
+                  "    pm.expect(card.front).to.equal(\"Tell me about yourself\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"back\": \"QA engineer with 3 years of test automation...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark card got_it",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is got_it\", function () {",
+                  "    pm.expect(pm.response.json().status).to.equal(\"got_it\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"got_it\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark card missed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Status is missed\", function () {",
+                  "    pm.expect(pm.response.json().status).to.equal(\"missed\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"missed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark card - invalid status -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maybe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get deleted card -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cardId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Cleanup and cascade",
+      "item": [
+        {
+          "name": "Add a card to the deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.collectionVariables.set(\"cascadeCardId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}/cards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}",
+                "cards"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"front\": \"Why Flask?\",\n  \"back\": \"Small and simple\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete deck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get deleted deck -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks/{{deckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks",
+                "{{deckId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Card was deleted with its deck -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cards/{{cascadeCardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cards",
+                "{{cascadeCardId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Wrong HTTP method -> 405",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 405\", function () {",
+                  "    pm.response.to.have.status(405);",
+                  "});",
+                  "pm.test(\"Body has an error message\", function () {",
+                  "    pm.expect(pm.response.json()).to.have.property(\"error\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/decks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "decks"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000"
+    },
+    {
+      "key": "deckId",
+      "value": ""
+    },
+    {
+      "key": "cardId",
+      "value": ""
+    },
+    {
+      "key": "cascadeCardId",
+      "value": ""
+    }
+  ]
+}

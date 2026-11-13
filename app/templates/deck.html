@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ deck.name }} - Study Buddy{% endblock %}
+{% block content %}
+<p><a href="/">&larr; All decks</a></p>
+<div class="title-row">
+  <h1 data-testid="deck-title">{{ deck.name }}</h1>
+  <a class="button" href="/decks/{{ deck.id }}/study" data-testid="study-link">Study this deck</a>
+</div>
+{% if deck.description %}<p class="muted">{{ deck.description }}</p>{% endif %}
+
+<form id="new-card-form" class="panel">
+  <textarea id="card-front" data-testid="card-front" placeholder="Front: question or term" rows="2"></textarea>
+  <textarea id="card-back" data-testid="card-back" placeholder="Back: answer or definition" rows="3"></textarea>
+  <select id="card-type" data-testid="card-type">
+    <option value="">Type (optional)</option>
+    <option value="question_answer">Question / answer</option>
+    <option value="term_definition">Term / definition</option>
+    <option value="a_b">A / B</option>
+  </select>
+  <button type="submit" data-testid="add-card">Add card</button>
+  <p id="card-error" class="error" data-testid="card-error" hidden></p>
+</form>
+
+<p id="no-cards" class="muted" data-testid="no-cards" hidden>No cards yet. Add one above.</p>
+<ul id="card-list" class="list" data-testid="card-list"></ul>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const DECK_ID = {{ deck.id }};
+const list = document.getElementById("card-list");
+
+async function loadCards() {
+  const cards = await api("GET", `/decks/${DECK_ID}/cards`);
+  document.getElementById("no-cards").hidden = cards.length > 0;
+  list.replaceChildren(...cards.map(cardRow));
+}
+
+function cardRow(card) {
+  const view = el("div", { class: "row-main stacked" },
+    el("strong", { "data-testid": "card-front-text", text: card.front }),
+    el("span", { class: "muted", "data-testid": "card-back-text", text: card.back }),
+    el("span", { class: `badge ${card.status}`, "data-testid": "card-status", text: card.status.replace("_", " ") }));
+
+  const front = el("textarea", { "data-testid": "edit-card-front", rows: "2" }); front.value = card.front;
+  const back = el("textarea", { "data-testid": "edit-card-back", rows: "3" }); back.value = card.back;
+  const editBox = el("div", { class: "row-main stacked", hidden: "" }, front, back,
+    el("button", { "data-testid": "save-card", text: "Save", onclick: async () => {
+      try { await api("PUT", `/cards/${card.id}`, { front: front.value, back: back.value }); await loadCards(); }
+      catch (e) { showError("card-error", e.message); }
+    }}));
+
+  const actions = el("div", { class: "actions" },
+    el("button", { class: "secondary", "data-testid": "edit-card", text: "Edit",
+                   onclick: () => { view.hidden = true; editBox.hidden = false; } }),
+    el("button", { class: "danger", "data-testid": "delete-card", text: "Delete", onclick: async () => {
+      await api("DELETE", `/cards/${card.id}`); await loadCards();
+    }}));
+
+  return el("li", { "data-testid": "card-item" }, view, editBox, actions);
+}
+
+document.getElementById("new-card-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const front = document.getElementById("card-front");
+  const back = document.getElementById("card-back");
+  const type = document.getElementById("card-type");
+  try {
+    await api("POST", `/decks/${DECK_ID}/cards`,
+              { front: front.value, back: back.value, card_type: type.value || null });
+    front.value = ""; back.value = ""; type.value = ""; showError("card-error", "");
+    front.focus();
+    await loadCards();
+  } catch (e) { showError("card-error", e.message); }
+});
+
+loadCards();
+</script>
+{% endblock %}

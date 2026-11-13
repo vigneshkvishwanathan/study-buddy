@@ -19,7 +19,7 @@ mark got_it/missed. Single user, no logins. Decks are organized by topic; a card
 ## Layout
 - `app/` – `create_app()` factory, `routes.py` (REST API under /api), `pages.py` + `templates/` (UI), `schema.sql`
 - `postman/` – collection (27 requests, 78 assertions), run by Newman in CI
-- `tests/api/` – 51 pytest tests incl. direct SQL checks; `tests/ui/` – 14 Playwright tests
+- `tests/api/` – 52 pytest tests incl. direct SQL checks; `tests/ui/` – 14 Playwright tests
 - `.github/workflows/ci.yml` – pytest, Newman, Playwright on chromium/firefox/webkit, "All tests passed" gate
 
 ## Commands
@@ -34,9 +34,7 @@ npx newman run postman/study-buddy.postman_collection.json
 ## Status / what's left
 - [x] Push to GitHub, replace YOUR-USERNAME in the README badge, get CI green
 - [x] Branch protection on `main` requiring the "All tests passed" check
-- [ ] Vig writes `tests/api/test_practice.py` and `tests/ui/test_practice_ui.py` himself.
-      **Coach him, don't write these for him.**
-- [ ] Optional: deploy to Render
+- [x] Practice tests `tests/api/test_practice.py` and `tests/ui/test_practice_ui.py` (Claude wrote them at Vig's request; Vig studies them).
 
 ## Conventions
 - Parameterized SQL (`?`) only. JSON errors for /api: 400 bad input, 404 missing, 405 wrong method.

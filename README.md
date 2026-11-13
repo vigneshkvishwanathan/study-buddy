@@ -10,7 +10,7 @@ I built it as a **QA + DevOps portfolio project**: the app is deliberately simpl
 |---|---|---|
 | App | Flask + SQLite + plain HTML/JS | REST API design, SQL schema design |
 | API tests | **Postman** collection run by **Newman** | 27 requests, 78 assertions, chained with variables |
-| API + DB tests | **pytest** + direct **SQL** queries | 51 tests checking responses *and* what's really stored |
+| API + DB tests | **pytest** + direct **SQL** queries | 52 tests checking responses *and* what's really stored |
 | UI tests | **Playwright** (Python) | 14 user flows on **Chromium, Firefox and WebKit** |
 | CI/CD | **GitHub Actions** | Every push runs everything; merges blocked on failure |
 
